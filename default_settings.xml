@@ -18,7 +18,7 @@
 	<multicolor>[[255, 255, 255], [0, 0, 255], [0, 255, 0]]</multicolor>	
 	<multicolor_range>[[20, 54], [54, 108], [35, 75]]</multicolor_range>	
 	
-	<sequence_active>True</sequence_active>	
+	<sequence_active>False</sequence_active>	
 	
 	<backlight_brightness>0</backlight_brightness>	
 	<backlight_brightness_percent>0</backlight_brightness_percent>	
