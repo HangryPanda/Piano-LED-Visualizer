@@ -18,7 +18,7 @@
 	<multicolor>[[255, 255, 255], [0, 0, 255], [0, 255, 0]]</multicolor>	
 	<multicolor_range>[[20, 54], [54, 108], [35, 75]]</multicolor_range>	
 	
-	<sequence_active>False</sequence_active>	
+	<sequence_active>True</sequence_active>	
 	
 	<backlight_brightness>0</backlight_brightness>	
 	<backlight_brightness_percent>0</backlight_brightness_percent>	
@@ -43,7 +43,7 @@
 	<adjacent_green>255</adjacent_green>		
 	<adjacent_blue>255</adjacent_blue>
 
-	<skipped_notes>None</skipped_notes>
+	<skipped_notes>Normal</skipped_notes>
 	
 	<time>1</time>
 	<date>1</date>
