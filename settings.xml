@@ -1,5 +1,5 @@
 <settings>
-	<brightness_percent>70</brightness_percent>
+	<brightness_percent>50</brightness_percent>
 	<background_color>BLACK</background_color>
 	<text_color>WHITE</text_color>
 	
@@ -59,7 +59,7 @@
 	<led_animation_delay>0</led_animation_delay>
 	<led_animation>Scanner</led_animation>
 	
-	<led_count>188</led_count>
+	<led_count>176</led_count>
 	<shift>0</shift>
 	
 	
