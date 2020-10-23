@@ -5,7 +5,7 @@
 	
 	<mode>Normal</mode>
 	<red>255</red>
-	<green>0</green>
+	<green>255</green>
 	<blue>255</blue>
 	
 	<fadingspeed>1</fadingspeed>
@@ -43,7 +43,7 @@
 	<adjacent_green>255</adjacent_green>		
 	<adjacent_blue>255</adjacent_blue>
 
-	<skipped_notes>Normal</skipped_notes>
+	<skipped_notes>None</skipped_notes>
 	
 	<time>1</time>
 	<date>1</date>
@@ -59,7 +59,7 @@
 	<led_animation_delay>0</led_animation_delay>
 	<led_animation>Scanner</led_animation>
 	
-	<led_count>176</led_count>
+	<led_count>188</led_count>
 	<shift>0</shift>
 	
 	
