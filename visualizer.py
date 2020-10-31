@@ -430,7 +430,7 @@ class MenuLCD:
     def __init__(self, xml_file_name):
         if args.display == '1in3':
             self.LCD = LCD_1in3.LCD()
-            self.font = ImageFont.truetype('/usr/share/fonts/truetype/freefont/Arial.ttf', self.scale(10))
+            self.font = ImageFont.truetype('/usr/share/fonts/truetype/freefont/lato.ttf', self.scale(10))
         else:
             self.LCD = LCD_1in44.LCD()
             self.font = ImageFont.load_default()
