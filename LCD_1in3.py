@@ -1,7 +1,7 @@
 import spidev
 import RPi.GPIO as GPIO
 import time
-import numpy as np
+import python3-numpy as np
 import LCD_Config
 
 
