@@ -430,7 +430,7 @@ class MenuLCD:
     def __init__(self, xml_file_name):
         if args.display == '1in3':
             self.LCD = LCD_1in3.LCD()
-            self.font = ImageFont.load_default(), self.scale(10)
+            self.font = ImageFont.truetype('/usr/share/fonts/truetype/freefont/FreeMonoBold.ttf', self.scale(10))
         else:
             self.LCD = LCD_1in44.LCD()
             self.font = ImageFont.load_default()
@@ -919,7 +919,7 @@ class MenuLCD:
         if(info_height_font > self.scale(12)):
             info_height_font = self.scale(12)
         
-        font = ImageFont.truetype('/usr/share/fonts/truetype/freefont/FreeSansBold.ttf', info_height_font)
+        font = ImageFont.truetype('/usr/share/fonts/truetype/freefont/FreeSansBold.ttf', int(info_height_font))
         
         if(menu.screensaver_settings["cpu"] == "1"):        
             self.draw.text((self.scale(1), top_offset), "CPU: "+str(cpu)+"% ("+str(cpu_average)+"%)", fill = self.text_color, font=font)
@@ -937,10 +937,10 @@ class MenuLCD:
             if(info_height_font > self.scale(11)):
                 info_height_font_network = self.scale(11)
             else:
-                info_height_font_network = info_height_font
-            font_network = ImageFont.truetype('/usr/share/fonts/truetype/freefont/FreeSansBold.ttf', info_height_font_network)
+                info_height_font_network = int(info_height_font)
+            font_network = ImageFont.truetype('/usr/share/fonts/truetype/freefont/FreeSansBold.ttf', int(info_height_font_network))
             self.draw.text((self.scale(1), top_offset), "D:"+str("{:.2f}".format(download))+"Mb/s U:"+str("{:.2f}".format(upload))+"Mb/s", fill = self.text_color, font=font_network)
-            top_offset += info_height_font_network    
+            top_offset += info_height_font_network
         
         if(menu.screensaver_settings["sd_card_space"] == "1"):          
             self.draw.text((self.scale(1), top_offset), "SD: "+str(round(card_space.used/(1024.0 ** 3), 1))+"/"+str(round(card_space.total/(1024.0 ** 3), 1))+"("+str(card_space.percent)+"%)", fill = self.text_color, font=font)
@@ -999,6 +999,8 @@ class MenuLCD:
                 ledsettings.fadingspeed = 10
             elif(choice == "Very slow"):
                 ledsettings.fadingspeed = 2
+            elif (choice == "Instant"):
+                ledsettings.fadingspeed = 1000
             usersettings.change_setting_value("fadingspeed", ledsettings.fadingspeed)
         
         if(location == "Velocity"):
@@ -1377,8 +1379,11 @@ def screensaver():
         else:
             ram_usage = 0
 
-        if(menu.screensaver_settings["temp"] == "1"):        
-            temp = find_between(str(psutil.sensors_temperatures()["cpu-thermal"]), "current=", ",")
+        if(menu.screensaver_settings["temp"] == "1"):
+            try:
+                temp = find_between(str(psutil.sensors_temperatures()["cpu_thermal"]), "current=", ",")
+            except:
+                temp = find_between(str(psutil.sensors_temperatures()["cpu-thermal"]), "current=", ",")
             temp = round(float(temp), 1)
         else:
             temp = 0
@@ -1413,7 +1418,7 @@ def screensaver():
         time.sleep(delay)
         i += 1
         try:
-            if (midiports.inport.poll() != None):
+            if (str(midiports.inport.poll()) != "None"):
                 menu.screensaver_is_running = False
                 saving.start_time = time.time()
                 menu.screen_status = 1
@@ -1421,7 +1426,7 @@ def screensaver():
                 menu.show()
                 break
         except:
-            pass
+           pass
         if GPIO.input(KEY2) == 0:
             menu.screensaver_is_running = False
             saving.start_time = time.time()
@@ -1748,6 +1753,8 @@ class LedSettings:
                         self.fadingspeed = 10
                     elif(self.fadingspeed == "Very slow"):
                         self.fadingspeed = 2
+                    elif (self.fadingspeed == "Instant"):
+                        self.fadingspeed = 1000
             
                 if(self.mode == "Velocity"):                
                     if(self.fadingspeed == "Fast"):
@@ -1817,7 +1824,7 @@ class LedSettings:
         elif(self.backlight_brightness_percent > 100):
             self.backlight_brightness_percent = 100
         self.backlight_brightness = 255 * self.backlight_brightness_percent / 100 
-        usersettings.change_setting_value("backlight_brightness", self.backlight_brightness)        
+        usersettings.change_setting_value("backlight_brightness", int(self.backlight_brightness))
         usersettings.change_setting_value("backlight_brightness_percent", self.backlight_brightness_percent)        
         fastColorWipe(ledstrip.strip, True)
     def change_backlight_color(self, color, value):
@@ -1903,15 +1910,27 @@ class LedSettings:
 class MidiPorts():
     def __init__(self):
         self.pending_queue = []
-    
-        ports = mido.get_input_names()
-        try:
-            for port in ports:
-                if "Through" not in port and "RPi" not in port and "RtMidOut" not in port and "USB-USB" not in port:
-                    self.inport =  mido.open_input(port)
-                    print("Inport set to "+port)
-        except:
-            print ("no input port")
+
+        # checking if the input port was previously set by the user
+        port = usersettings.get_setting_value("input_port")
+        if (port != "default"):
+            try:
+                self.inport = mido.open_input(port)
+                print("Inport loaded and set to " + port)
+            except:
+                print("Can't load input port: " + port);
+        else :
+            # if not, try to find the new midi port
+            ports = mido.get_input_names()
+            try:
+                for port in ports:
+                    if "Through" not in port and "RPi" not in port and "RtMidOut" not in port and "USB-USB" not in port:
+                        self.inport =  mido.open_input(port)
+                        usersettings.change_setting_value("input_port", port)
+                        print("Inport set to "+port)
+            except:
+                print ("no input port")
+
         try:            
             for port in ports:
                 if "Through" not in port and "RPi" not in port and "RtMidOut" not in port and "USB-USB" not in port:
@@ -1919,13 +1938,14 @@ class MidiPorts():
                     print("playport set to "+port)
         except:
             print("no playback port")
-            
+
         self.portname = "inport"
             
     def change_port(self, port, portname):
         try:
             if(port == "inport"):                
                 self.inport =  mido.open_input(portname)
+                usersettings.change_setting_value("input_port", portname)
             elif(port == "playport"):
                 self.playport =  mido.open_output(portname)
             menu.render_message("Changing "+port+" to:", portname, 1500)
@@ -1942,6 +1962,7 @@ ledsettings = LedSettings()
 
 z = 0
 display_cycle = 0
+screen_hold_time = 16
 
 last_activity = time.time()
 
@@ -1960,12 +1981,9 @@ while True:
             elapsed_time = time.time() - saving.start_time
     except:
             elapsed_time = 0
-    if(display_cycle >= 60):
+    if(display_cycle >= 3):
         display_cycle = 0
-        if(saving.isrecording == True):
-            screen_hold_time = 12
-        else:
-            screen_hold_time = 3
+
         if(elapsed_time > screen_hold_time):
             menu.show()
             timeshift_start = time.time()     
@@ -2043,7 +2061,12 @@ while True:
                 red = get_rainbow_colors(int((int(n) + ledsettings.rainbow_offset + int(timeshift)) * (float(ledsettings.rainbow_scale)/ 100)) & 255, "red")
                 green = get_rainbow_colors(int((int(n) + ledsettings.rainbow_offset + int(timeshift)) * (float(ledsettings.rainbow_scale) / 100)) & 255, "green")
                 blue = get_rainbow_colors(int((int(n) + ledsettings.rainbow_offset + int(timeshift)) * (float(ledsettings.rainbow_scale)/ 100)) & 255, "blue")
-                
+
+                if (int(note) == 1001):
+                    if (int(note) > 0):
+                        ledstrip.strip.setPixelColor((n), Color(int(green), int(red), int(blue)))
+                        ledstrip.set_adjacent_colors(n, Color(int(green), int(red), int(blue)), False)
+
             if(ledsettings.color_mode == "Speed"):
                 speed_colors = ledsettings.speed_get_colors()
                 red = speed_colors[0]
@@ -2086,7 +2109,7 @@ while True:
         continue
     #loop through incoming midi messages
     for msg in midiports.midipending:
-    
+
         last_activity = time.time()     
         note = find_between(str(msg), "note=", " ")
         original_note = note

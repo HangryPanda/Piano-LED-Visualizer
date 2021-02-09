@@ -1,5 +1,5 @@
 <settings>
-	<brightness_percent>75</brightness_percent>
+	<brightness_percent>50</brightness_percent>
 	<background_color>BLACK</background_color>
 	<text_color>WHITE</text_color>
 	
@@ -62,5 +62,6 @@
 	<led_count>176</led_count>
 	<shift>0</shift>
 	
-	
+	<input_port>default</input_port>
+
 </settings>
