@@ -52,6 +52,7 @@ execute_command() {
 update_os() {
   execute_command "sudo apt-get update" "check_internet"
   execute_command "sudo apt-get upgrade -y"
+  execute_command "sudo apt --fix-broken install -y"
 }
 
 # Function to create and configure the autoconnect script
