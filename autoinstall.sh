@@ -109,7 +109,7 @@ EOF
 # Function to enable SPI interface
 enable_spi_interface() {
   # Edit config.txt file to enable SPI interface
-  execute_command "sudo sed -i '$ a\dtparam=spi=on' /boot/config.txt"
+  execute_command "sudo sed -i '$ a\dtparam=spi=on' /boot/firmware/config.txt"
 }
 
 # Function to install required packages
