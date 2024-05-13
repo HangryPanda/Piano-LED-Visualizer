@@ -86,6 +86,8 @@ You can also connect Raspberry Pi to your network [manually](https://github.com/
 ### 2. **Manual installation**
 [Instructions](https://github.com/onlaj/Piano-LED-Visualizer/blob/master/Docs/manual_installation.md)
 
+MuseScore
+sudo bash -c "$(curl -fsSL https://musescore.org/en/download/musescore-x86_64.AppImage" 
 ## Connecting LED Strip to Raspberry Pi and enabling SPI
 There is no point to reinvent the wheel again, here is a nice [tutorial](https://tutorials-raspberrypi.com/connect-control-raspberry-pi-ws2812-rgb-led-strips/) *(do only the hardware part)*.
 Double check how your LED strip is wired. Most strips use G-D-V (ground, data, voltage), however in the wiring diagram shown in the tutorial the voltage and data lines are swapped.
