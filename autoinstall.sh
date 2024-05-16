@@ -188,7 +188,7 @@ install_piano_led_visualizer() {
   execute_command "sudo chmod -R 777 /home/Piano-LED-Visualizer-JV/venv"
    execute_command "sudo chmod -R 777 /home/Piano-LED-Visualizer-JV/venv/bin"
     execute_command "sudo chmod -R 777 /home/Piano-LED-Visualizer-JV/venv/lib"
-  execute_command "sudo source /home/Piano-LED-Visualizer-JV/venv/bin/activate"
+  execute_command "source /home/Piano-LED-Visualizer-JV/venv/bin/activate"
   execute_command "pip3 install -U -r requirements.txt" "check_internet"
   execute_command "sudo raspi-config nonint do_boot_behaviour B2"
   cat <<EOF | sudo tee /lib/systemd/system/visualizer.service > /dev/null
@@ -201,7 +201,7 @@ Wants=network-online.target
 WantedBy=multi-user.target
 
 [Service]
-ExecStart=sudo /home/Piano-LED-Visualizer-JV/venv/bin/python /home/Piano-LED-Visualizer-JV/visualizer.py
+ExecStart=sudo /home/Piano-LED-Visualizer-JV/venv/bin/python3 /home/Piano-LED-Visualizer-JV/visualizer.py
 Restart=always
 Type=simple
 User=plv
