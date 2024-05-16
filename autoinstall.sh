@@ -115,7 +115,7 @@ enable_spi_interface() {
 
 # Function to install required packages
 install_packages() {
-  execute_command "sudo apt-get install -y ruby git python3-pip autotools-dev libtool autoconf libasound2 libusb-dev libdbus-1-dev libglib2.0-dev libudev-dev libical-dev libreadline-dev python3 libatlas-base-dev libopenjp2-7 libtiff5-dev libjack0 libjack-dev libasound2 libavahi-client3 libavahi-common3 libc6 libfmt7 libgcc-s1 libstdc++6 fonts-freefont-ttf gcc make build-essential python3 git scons swig libavahi-client3 abcmidi dnsmasq hostapd dhcpcd5" "check_internet"
+  execute_command "sudo apt-get install -y ruby git python3-pip autotools-dev libtool autoconf libasound2 libusb-dev libdbus-1-dev libglib2.0-dev libudev-dev libical-dev libreadline-dev python3 libatlas-base-dev libopenjp2-7 libtiff5-dev libjack0 libjack-dev libasound2 libavahi-client3 libavahi-common3 libc6 libgcc-s1 libstdc++6 fonts-freefont-ttf gcc make build-essential python3 git scons swig libavahi-client3 abcmidi dnsmasq hostapd dhcpcd5" "check_internet"
 }
 
 # Function to disable audio output
