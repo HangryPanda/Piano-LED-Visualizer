@@ -181,7 +181,7 @@ wpa-conf /etc/wpa_supplicant/wpa_supplicant.conf
 # Function to install Piano-LED-Visualizer
 install_piano_led_visualizer() {
   execute_command "cd /home/"
-  execute_command "sudo git clone https://github.com/onlaj/Piano-LED-Visualizer-JV" "check_internet"
+  execute_command "sudo git clone https://github.com/HangryPanda/Piano-LED-Visualizer-JV" "check_internet"
   execute_command "cd Piano-LED-Visualizer"
   execute_command "sudo python3 -m venv /home/Piano-LED-Visualizer-JV/venv"
   execute_command "sudo chmod -R 777 /home/Piano-LED-Visualizer-JV"
