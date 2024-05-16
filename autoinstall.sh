@@ -115,7 +115,7 @@ enable_spi_interface() {
 
 # Function to install required packages
 install_packages() {
-  execute_command "sudo apt-get install -y ruby git python3-pip autotools-dev libtool autoconf libasound2-dev libusb-dev libdbus-1-dev libglib2.0-dev libudev-dev libical-dev libreadline-dev python3 libatlas-base-dev libopenjp2-7 libtiff5-dev libjack0 libjack-dev libasound2-dev fonts-freefont-ttf gcc make build-essential python3 git scons swig libavahi-client3 abcmidi dnsmasq hostapd" "check_internet"
+  execute_command "sudo apt-get install -y ruby git python3-pip autotools-dev libtool autoconf libasound2-dev libusb-dev libdbus-1-dev libglib2.0-dev libudev-dev libical-dev libreadline-dev python3 libatlas-base-dev libopenjp2-7 libtiff5-dev libjack0 libjack-dev libasound2-dev fonts-freefont-ttf gcc make build-essential python3 git scons swig libavahi-client3 abcmidi dnsmasq hostapd dhcpcd5" "check_internet"
 }
 
 # Function to disable audio output
@@ -127,13 +127,13 @@ disable_audio_output() {
 # Function to install RTP-midi server
 install_rtpmidi_server() {
   execute_command "cd /home/"
-  execute_command "sudo wget https://github.com/HangryPanda/Piano-LED-Visualizer-JV/releases/download/21.11/rtpmidid_21.11_armhf.deb" "check_internet"
-  execute_command "sudo dpkg -i rtpmidid_21.11_armhf.deb"
+  execute_command "sudo wget https://github.com/davidmoreno/rtpmidid/releases/download/v23.10/rtpmidid_23.10_armhf.deb" "check_internet"
+  execute_command "sudo dpkg -i rtpmidid_23.10_armhf.deb"
 }
 
 # Function to create Hot-Spot
 create_hotspot() {
-  echo 'interface wlan0 static ip_address=192.168.4.1/24' | sudo tee --append /etc/dhcpcd.conf > /dev/null
+  echo 'interface wlan0 static ip_address=192.168.4.254/24' | sudo tee --append /etc/dhcpcd.conf > /dev/null
   sudo mv /etc/dnsmasq.conf /etc/dnsmasq.conf.orig
   sudo systemctl daemon-reload
   sudo systemctl restart dhcpcd
@@ -181,9 +181,15 @@ wpa-conf /etc/wpa_supplicant/wpa_supplicant.conf
 # Function to install Piano-LED-Visualizer
 install_piano_led_visualizer() {
   execute_command "cd /home/"
-  execute_command "sudo git clone https://github.com/onlaj/Piano-LED-Visualizer" "check_internet"
+  execute_command "sudo git clone https://github.com/onlaj/Piano-LED-Visualizer-JV" "check_internet"
   execute_command "cd Piano-LED-Visualizer"
-  execute_command "sudo pip3 install -r requirements.txt" "check_internet"
+  execute_command "sudo python3 -m venv /home/Piano-LED-Visualizer-JV/venv"
+  execute_command "sudo chmod -R 777 /home/Piano-LED-Visualizer-JV"
+  execute_command "sudo chmod -R 777 /home/Piano-LED-Visualizer-JV/venv"
+   execute_command "sudo chmod -R 777 /home/Piano-LED-Visualizer-JV/venv/bin"
+    execute_command "sudo chmod -R 777 /home/Piano-LED-Visualizer-JV/venv/lib"
+  execute_command "sudo source /home/Piano-LED-Visualizer-JV/venv/bin/activate"
+  execute_command "pip3 install -U -r requirements.txt" "check_internet"
   execute_command "sudo raspi-config nonint do_boot_behaviour B2"
   cat <<EOF | sudo tee /lib/systemd/system/visualizer.service > /dev/null
 [Unit]
@@ -195,7 +201,7 @@ Wants=network-online.target
 WantedBy=multi-user.target
 
 [Service]
-ExecStart=sudo python3 /home/Piano-LED-Visualizer/visualizer.py
+ExecStart=sudo /home/Piano-LED-Visualizer-JV/venv/bin/python /home/Piano-LED-Visualizer-JV/visualizer.py
 Restart=always
 Type=simple
 User=plv
@@ -205,10 +211,10 @@ EOF
   execute_command "sudo systemctl enable visualizer.service"
   execute_command "sudo systemctl start visualizer.service"
 
-  execute_command "sudo chmod a+rwxX -R /home/Piano-LED-Visualizer/"
+  execute_command "sudo chmod a+rwxX -R /home/Piano-LED-Visualizer-JV/"
 
-  execute_command "sudo chmod +x /home/Piano-LED-Visualizer/disable_ap.sh"
-  execute_command "sudo chmod +x /home/Piano-LED-Visualizer/enable_ap.sh"
+  execute_command "sudo chmod +x /home/Piano-LED-Visualizer-JV/disable_ap.sh"
+  execute_command "sudo chmod +x /home/Piano-LED-Visualizer-JV/enable_ap.sh"
 }
 
 finish_installation() {
@@ -219,7 +225,7 @@ finish_installation() {
   echo "After the reboot, please wait for up to 10 minutes. The Visualizer should start, and the Hotspot 'PianoLEDVisualizer' will become available."
 
   execute_command "sudo shutdown -r +1"
-  execute_command "sudo /home/Piano-LED-Visualizer/enable_ap.sh"
+  execute_command "sudo /home/Piano-LED-Visualizer-JV/enable_ap.sh"
   sleep 60
   # Reboot Raspberry Pi
   execute_command "sudo reboot"

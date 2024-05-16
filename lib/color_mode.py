@@ -143,7 +143,54 @@ class Rainbow(ColorMode):
         self.timeshift_start = time.time()
         self.colormap = ledsettings.rainbow_colormap
         if self.colormap not in cmap.colormaps:
-            self.colormaps = "Rainbow"
+            self.colormap = "Rainbow"
+
+    def NoteOn(self, midi_event: mido.Message, midi_time, midi_state, note_position):
+        shift = (time.time() - self.timeshift_start) * self.timeshift
+        rainbow_value = int((int(note_position) + self.offset + shift) * (
+                float(self.scale) / 100)) & 255
+        return cmap.colormaps[self.colormap][rainbow_value]
+
+    def ColorUpdate(self, time_delta, led_pos, old_color):
+        return self.NoteOn(None, None, None, led_pos)
+
+
+class ScaleColoring(ColorMode):
+    def LoadSettings(self, ledsettings):
+        self.scale_key = int(ledsettings.scale_key)
+        self.key_in_scale = ledsettings.key_in_scale
+        self.key_not_in_scale = ledsettings.key_not_in_scale
+
+    def NoteOn(self, midi_event: mido.Message, midi_time, midi_state, note_position):
+        scale_colors = get_scale_color(self.scale_key, midi_event.note, self.key_in_scale, self.key_not_in_scale)
+        return scale_colors
+
+
+class VelocityRainbow(ColorMode):
+    def LoadSettings(self, ledsettings):
+        self.offset = int(ledsettings.velocityrainbow_offset)
+        self.scale = int(ledsettings.velocityrainbow_scale)
+        self.curve = int(ledsettings.velocityrainbow_curve)
+        self.colormap = ledsettings.velocityrainbow_colormap
+
+    def NoteOn(self, midi_event: mido.Message, midi_time, midi_state, note_position):
+        if self.colormap not in cmap.colormaps:
+            return None
+
+        x = int(((255 * powercurve(midi_event.velocity / 127, self.curve / 100)
+                    * (self.scale / 100) % 256) + self.offset) % 256)
+        return cmap.colormaps[self.colormap][x]
+
+
+class Rainbow(ColorMode):
+    def LoadSettings(self, ledsettings):
+        self.offset = int(ledsettings.rainbow_offset)
+        self.scale = int(ledsettings.rainbow_scale)
+        self.timeshift = int(ledsettings.rainbow_timeshift)
+        self.timeshift_start = time.time()
+        self.colormap = ledsettings.rainbow_colormap
+        if self.colormap not in cmap.colormaps:
+            self.colormap = "Rainbow"
 
     def NoteOn(self, midi_event: mido.Message, midi_time, midi_state, note_position):
         shift = (time.time() - self.timeshift_start) * self.timeshift
