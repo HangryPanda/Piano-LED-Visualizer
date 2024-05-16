@@ -144,6 +144,9 @@ class Rainbow(ColorMode):
         self.colormap = ledsettings.rainbow_colormap
         if self.colormap not in cmap.colormaps:
             self.colormap = 'Rainbow'
+        # Ensure 'Rainbow' is in colormaps
+        if 'Rainbow' not in cmap.colormaps:
+            cmap.colormaps['Rainbow'] = gradients['Rainbow']
 
     def NoteOn(self, midi_event: mido.Message, midi_time, midi_state, note_position):
         shift = (time.time() - self.timeshift_start) * self.timeshift
