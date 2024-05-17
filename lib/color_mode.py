@@ -4,6 +4,7 @@ from lib.rpi_drivers import Color
 import colorsys
 import mido
 import random
+from collections import namedtuple
 
 class ColorMode(object):
     def __new__(cls, name, ledsettings):
@@ -68,21 +69,20 @@ class ColorMode(object):
         """
         pass
 
+Color = namedtuple('Color', ['red', 'green', 'blue'])
+Range = namedtuple('Range', ['start', 'end'])
 
 class SingleColor(ColorMode):
     def LoadSettings(self, ledsettings):
-        self.red = ledsettings.get_color("Red")
-        self.green = ledsettings.get_color("Green")
-        self.blue = ledsettings.get_color("Blue")
+        self.color = Color(ledsettings.get_color("Red"), ledsettings.get_color("Green"), ledsettings.get_color("Blue"))
 
     def NoteOn(self, midi_event: mido.Message, midi_time, midi_state, note_position):
-        return (self.red, self.green, self.blue)
-
+        return self.color
 
 class Multicolor(ColorMode):
     def LoadSettings(self, ledsettings):
-        self.multicolor = ledsettings.multicolor
-        self.multicolor_range = ledsettings.multicolor_range
+        self.multicolor = [Color(*color) for color in ledsettings.multicolor]
+        self.multicolor_range = [Range(*range) for range in ledsettings.multicolor_range]
         self.multicolor_index = 0
         self.multicolor_iteration = ledsettings.multicolor_iteration
 
@@ -136,105 +136,111 @@ class Multicolor(ColorMode):
         return chosen_color
 
 class Rainbow(ColorMode):
+    RainbowSettings = namedtuple('RainbowSettings', ['offset', 'scale', 'timeshift', 'colormap'])
+
     def LoadSettings(self, ledsettings):
-        self.offset = int(ledsettings.rainbow_offset)
-        self.scale = int(ledsettings.rainbow_scale)
-        self.timeshift = int(ledsettings.rainbow_timeshift)
+        settings = self.RainbowSettings(
+            offset=int(ledsettings.rainbow_offset),
+            scale=int(ledsettings.rainbow_scale),
+            timeshift=int(ledsettings.rainbow_timeshift),
+            colormap=ledsettings.rainbow_colormap
+        )
+        if settings.colormap not in cmap.colormaps:
+            print(f"Colormap '{settings.colormap}' not found. Defaulting to 'Rainbow'.")
+            settings = settings._replace(colormap='Rainbow')
+        self.settings = settings
         self.timeshift_start = time.time()
-        self.colormap = ledsettings.rainbow_colormap
-        if self.colormap not in cmap.colormaps:
-            self.colormap = 'Rainbow'
 
     def NoteOn(self, midi_event: mido.Message, midi_time, midi_state, note_position):
-        shift = (time.time() - self.timeshift_start) * self.timeshift
-        rainbow_value = int((int(note_position) + self.offset + shift) * (
-                float(self.scale) / 100)) & 255
-        return cmap.colormaps[self.colormap][rainbow_value]
+        shift = (time.time() - self.timeshift_start) * self.settings.timeshift
+        rainbow_value = int((int(note_position) + self.settings.offset + shift) * (
+                float(self.settings.scale) / 100)) & 255
+        return cmap.colormaps[self.settings.colormap][rainbow_value]
 
     def ColorUpdate(self, time_delta, led_pos, old_color):
         return self.NoteOn(None, None, None, led_pos)
 
 
 class ScaleColoring(ColorMode):
+    ScaleColoringSettings = namedtuple('ScaleColoringSettings', ['scale_key', 'key_in_scale', 'key_not_in_scale'])
+
     def LoadSettings(self, ledsettings):
-        self.scale_key = int(ledsettings.scale_key)
-        self.key_in_scale = ledsettings.key_in_scale
-        self.key_not_in_scale = ledsettings.key_not_in_scale
+        settings = self.ScaleColoringSettings(
+            scale_key=int(ledsettings.scale_key),
+            key_in_scale=ledsettings.key_in_scale,
+            key_not_in_scale=ledsettings.key_not_in_scale
+        )
+        self.settings = settings
 
     def NoteOn(self, midi_event: mido.Message, midi_time, midi_state, note_position):
-        scale_colors = get_scale_color(self.scale_key, midi_event.note, self.key_in_scale, self.key_not_in_scale)
+        scale_colors = get_scale_color(self.settings.scale_key, midi_event.note, self.settings.key_in_scale, self.settings.key_not_in_scale)
         return scale_colors
 
 
 class VelocityRainbow(ColorMode):
+    def __init__(self, name, ledsettings):
+        super().__init__(name, ledsettings)
+        self.VelocityRainbowSettings = namedtuple('VelocityRainbowSettings', ['offset', 'scale', 'curve', 'colormap'])
+
     def LoadSettings(self, ledsettings):
-        self.offset = int(ledsettings.velocityrainbow_offset)
-        self.scale = int(ledsettings.velocityrainbow_scale)
-        self.curve = int(ledsettings.velocityrainbow_curve)
-        self.colormap = ledsettings.velocityrainbow_colormap
+        settings = self.VelocityRainbowSettings(
+            offset=int(ledsettings.velocityrainbow_offset),
+            scale=int(ledsettings.velocityrainbow_scale),
+            curve=int(ledsettings.velocityrainbow_curve),
+            colormap=ledsettings.velocityrainbow_colormap
+        )
+        self.settings = settings
 
     def NoteOn(self, midi_event: mido.Message, midi_time, midi_state, note_position):
-        if self.colormap not in cmap.colormaps:
+        if self.settings.colormap not in cmap.colormaps:
             return None
 
-        x = int(((255 * powercurve(midi_event.velocity / 127, self.curve / 100)
-                    * (self.scale / 100) % 256) + self.offset) % 256)
-        return cmap.colormaps[self.colormap][x]
+        x = int(((255 * powercurve(midi_event.velocity / 127, self.settings.curve / 100)
+                    * (self.settings.scale / 100) % 256) + self.settings.offset) % 256)
+        return cmap.colormaps[self.settings.colormap][x]
 
 
-class Rainbow(ColorMode):
-    def LoadSettings(self, ledsettings):
-        self.offset = int(ledsettings.rainbow_offset)
-        self.scale = int(ledsettings.rainbow_scale)
-        self.timeshift = int(ledsettings.rainbow_timeshift)
-        self.timeshift_start = time.time()
-        self.colormap = ledsettings.rainbow_colormap
-        if self.colormap not in cmap.colormaps:
-            self.colormap = 'Rainbow'
 
-    def NoteOn(self, midi_event: mido.Message, midi_time, midi_state, note_position):
-        shift = (time.time() - self.timeshift_start) * self.timeshift
-        rainbow_value = int((int(note_position) + self.offset + shift) * (
-                float(self.scale) / 100)) & 255
-        return cmap.colormaps[self.colormap][rainbow_value]
-
-    def ColorUpdate(self, time_delta, led_pos, old_color):
-        return self.NoteOn(None, None, None, led_pos)
 
 
 class SpeedColor(ColorMode):
+    SpeedColorSettings = namedtuple('SpeedColorSettings', ['notes_in_last_period', 'speed_slowest', 'speed_fastest', 'speed_period_in_seconds', 'speed_max_notes'])
+
     def LoadSettings(self, ledsettings):
-        self.notes_in_last_period = []
-        self.speed_slowest = ledsettings.speed_slowest
-        self.speed_fastest = ledsettings.speed_fastest
-        self.speed_period_in_seconds = ledsettings.speed_period_in_seconds
-        self.speed_max_notes = ledsettings.speed_max_notes
+        settings = self.SpeedColorSettings(
+            notes_in_last_period=[],
+            speed_slowest=ledsettings.speed_slowest,
+            speed_fastest=ledsettings.speed_fastest,
+            speed_period_in_seconds=ledsettings.speed_period_in_seconds,
+            speed_max_notes=ledsettings.speed_max_notes
+        )
+        self.settings = settings
 
     def NoteOn(self, midi_event: mido.Message, midi_time, midi_state, note_position):
         current_time = time.time()
-        self.notes_in_last_period.append(current_time)
+        self.settings.notes_in_last_period.append(current_time)
         return self.speed_get_colors()
 
     def speed_get_colors(self):
-        for note_time in self.notes_in_last_period[:]:
-            if (time.time() - self.speed_period_in_seconds) > note_time:
-                self.notes_in_last_period.remove(note_time)
+        for note_time in self.settings.notes_in_last_period[:]:
+            if (time.time() - self.settings.speed_period_in_seconds) > note_time:
+                self.settings.notes_in_last_period.remove(note_time)
 
-        notes_count = len(self.notes_in_last_period)
-        max_notes = self.speed_max_notes
+        notes_count = len(self.settings.notes_in_last_period)
+        max_notes = self.settings.speed_max_notes
         speed_percent = notes_count / float(max_notes)
 
         if notes_count > max_notes:
-            red = self.speed_fastest["red"]
-            green = self.speed_fastest["green"]
-            blue = self.speed_fastest["blue"]
+            red = self.settings.speed_fastest["red"]
+            green = self.settings.speed_fastest["green"]
+            blue = self.settings.speed_fastest["blue"]
         else:
-            red = ((self.speed_fastest["red"] - self.speed_slowest["red"]) *
-                   float(speed_percent)) + self.speed_slowest["red"]
-            green = ((self.speed_fastest["green"] - self.speed_slowest["green"]) *
-                     float(speed_percent)) + self.speed_slowest["green"]
-            blue = ((self.speed_fastest["blue"] - self.speed_slowest["blue"]) *
-                    float(speed_percent)) + self.speed_slowest["blue"]
+            red = ((self.settings.speed_fastest["red"] - self.settings.speed_slowest["red"]) *
+                   float(speed_percent)) + self.settings.speed_slowest["red"]
+            green = ((self.settings.speed_fastest["green"] - self.settings.speed_slowest["green"]) *
+                     float(speed_percent)) + self.settings.speed_slowest["green"]
+            blue = ((self.settings.speed_fastest["blue"] - self.settings.speed_slowest["blue"]) *
+                    float(speed_percent)) + self.settings.speed_slowest["blue"]
         return (round(red), round(green), round(blue))
 
 
